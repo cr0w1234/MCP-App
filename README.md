@@ -45,26 +45,14 @@ The MCP (Model Context Protocol) server provides tools for database querying and
 - `http_get(url, headers)`: Generic HTTP GET requests
 - `add(a, b)`, `subtract(a, b)`: Basic arithmetic operations
 
-**Security Features**:
-```python
-# Only SELECT queries allowed
-if not sql.strip().upper().startswith("SELECT"):
-    raise ValueError("Only SELECT queries are allowed. This is a read-only database connection.")
-
-# Dangerous keyword filtering
-dangerous_keywords = ["INSERT", "UPDATE", "DELETE", "DROP", "CREATE", "ALTER", ...]
-```
 
 #### `test_mcp_server.py`
 **Purpose**: Testing utilities for MCP server functionality.
 
 **Usage**:
 ```python
-# Test database connectivity
-python test_mcp_server.py
-
-# Test specific MCP tools
-python test_mcp_server.py --tool query_demo_db
+# Test MCP tools connectivity locally
+uv run test_mcp_server.py
 ```
 
 #### `test_openai.py`
@@ -84,19 +72,13 @@ pip install -r requirements.txt
 python readonly-db-mcp-server.py
 ```
 
-#### Cloud Run Deployment
-```bash
-# Build and deploy to Google Cloud Run
-gcloud run deploy mcp-server \
-  --source . \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated
-```
+#### Cloud Run MCP Server Deployment
+Follow this guide: https://cloud.google.com/run/docs/tutorials/deploy-remote-mcp-server#source
 
 #### Environment Variables
 ```bash
 DATABASE_URL=postgresql://user:pass@host:port/db
+MCP_SERVER_URL=https://your-mcp-server-url.run.app/mcp/
 TMDB_API_KEY=your_tmdb_api_key
 TMDB_ACCOUNT_ID=your_account_id
 TMDB_SESSION_ID=your_session_id
@@ -176,42 +158,9 @@ result = rag_service.answer_question("Your question here")
 
 ### Local Setup
 
-1. **Clone and Install Dependencies**
+1.  **Run the Applications**
 ```bash
-git clone <repository-url>
-cd test-rag-mcp
-
-# Install MCP server dependencies
-cd working-mcp-on-cloudrun
-pip install -e .
-
-# Install RAG UI dependencies
-cd ../rag-mcp-server
-pip install flask python-dotenv
-```
-
-2. **Environment Configuration**
-```bash
-# Create .env files in both directories
-cp .env.example .env
-
-# Configure your environment variables
-DATABASE_URL=postgresql://user:pass@host:port/db
-OPENAI_API_KEY=your_openai_api_key
-TMDB_API_KEY=your_tmdb_api_key
-```
-
-3. **Database Setup**
-```sql
--- Create read-only user (recommended)
-CREATE USER readonly_user WITH PASSWORD 'your_password';
-GRANT CONNECT ON DATABASE your_database TO readonly_user;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_user;
-```
-
-4. **Run the Applications**
-```bash
-# Terminal 1: Start MCP server
+# Terminal 1: Start MCP server (no need if using an already deployed MCP server url)
 cd working-mcp-on-cloudrun
 python readonly-db-mcp-server.py
 
@@ -232,12 +181,6 @@ python test_mcp_server.py
 # Test OpenAI integration
 python test_openai.py
 
-# Test specific tools
-python -c "
-from readonly_db_mcp_server import query_demo_db
-result = query_demo_db('SELECT COUNT(*) FROM companies')
-print(result)
-"
 ```
 
 ### RAG UI Testing
@@ -280,26 +223,6 @@ logger.info(f"Tool calls executed: {len(resp.tool_calls)}")
 - **WARNING**: Connection pool issues
 - **ERROR**: Database connection failures
 
-## 🚀 Production Deployment
-
-### Cloud Run Deployment
-```bash
-# Deploy MCP server
-cd working-mcp-on-cloudrun
-gcloud run deploy mcp-server --source .
-
-# Deploy RAG UI
-cd ../rag-mcp-server
-gcloud run deploy rag-ui --source .
-```
-
-### Environment Variables for Production
-```bash
-# Set production environment variables
-gcloud run services update mcp-server \
-  --set-env-vars DATABASE_URL=$DATABASE_URL,OPENAI_API_KEY=$OPENAI_API_KEY
-```
-
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -307,10 +230,6 @@ gcloud run services update mcp-server \
 3. Make your changes
 4. Add tests for new functionality
 5. Submit a pull request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🆘 Troubleshooting
 
@@ -330,6 +249,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
    - Ensure Flask dependencies are installed
    - Check port 5000 availability
    - Verify document directory exists
-
-### Support
-For issues and questions, please open an issue in the repository. 
