@@ -190,7 +190,7 @@ def ask_mcp():
     load_dotenv(override=True)
     client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 
-    CLOUD_RUN_URL = "https://test-mcp-server-4-82241824210.us-central1.run.app/mcp/" # "https://test-mcp-server-4-82241824210.us-central1.run.app/mcp/" # not read only: "https://test-mcp-server-3-82241824210.us-central1.run.app/mcp/" # "https://test-mcp-server-82241824210.us-central1.run.app/mcp/" # "http://localhost:8080", "https://mcp-server-xtjhu227ga-uc.a.run.app", "https://mcp-server-82241824210.us-central1.run.app"
+    CLOUD_RUN_URL = os.getenv('MCP_SERVER_URL', 'http://localhost:8080/mcp/')
 
     # Log the incoming question
     logger.info(f"MCP Query Request: {question}")

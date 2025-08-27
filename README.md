@@ -4,6 +4,8 @@ This repository contains two main components:
 1. **working-mcp-on-cloudrun**: MCP server implementation and deployment tools
 2. **rag-mcp-server**: Simple web UI for interacting with MCP tools
 
+> **📖 Quick Start**: See [SETUP.md](SETUP.md) for detailed setup instructions.
+
 ## 📁 Project Structure
 
 ```

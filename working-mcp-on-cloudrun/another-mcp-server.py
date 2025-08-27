@@ -21,7 +21,7 @@ load_dotenv(override=True)
 # Database configuration
 db_connection = None
 
-DB_URL = os.getenv('DATABASE_URL') # "postgresql://postgres.cvzlylxhvthjvmjuluqe:0emrypuED2Z1f43c@aws-0-us-east-1.pooler.supabase.com:5432/postgres" # "postgresql://postgres:Mc1jG1jFrMEKXkws@db.cvzlylxhvthjvmjuluqe.supabase.co:5432/postgres" # "postgresql://postgres.cvzlylxhvthjvmjuluqe:Mc1jG1jFrMEKXkws@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
+DB_URL = os.getenv('DATABASE_URL')
 
 # TMDB API Configuration
 TMDB_CONFIG = {
