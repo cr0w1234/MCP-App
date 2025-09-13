@@ -6,6 +6,7 @@ This enhanced version of the RAG system includes persistent chat functionality u
 - Return to previous chat sessions
 - Have their chat history persist across browser refreshes
 - View a list of all previous chat sessions
+- Maintain conversation context with response IDs for continuity
 
 ## Features
 
@@ -14,36 +15,28 @@ This enhanced version of the RAG system includes persistent chat functionality u
 - **Session Persistence**: Sessions are stored in localStorage and restored on page reload
 - **Session History**: View all previous chat sessions with timestamps
 - **Session Switching**: Click on any previous session to load its chat history
+- **Session Deletion**: Delete entire chat sessions and all associated messages
 
 ### Message Persistence
 - **Automatic Saving**: All user messages and assistant responses are automatically saved
 - **Order Preservation**: Messages maintain their chronological order within each session
 - **Rich Content Storage**: Full message content including markdown formatting is preserved
+- **Response ID Tracking**: Maintains conversation continuity with OpenAI response IDs
 
 ## Setup Instructions
 
 ### 1. Database Setup
 
-Create a Supabase table with the following schema:
+Run the SQL commands in `supabase_setup_memory.sql` in your Supabase SQL editor. This will:
 
-```sql
-CREATE TABLE openai_chats (
-    id SERIAL PRIMARY KEY,
-    session_id TEXT NOT NULL,
-    content JSONB NOT NULL,
-    "order" INTEGER NOT NULL,
-    timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create indexes for better performance
-CREATE INDEX idx_openai_chats_session_id ON openai_chats(session_id);
-CREATE INDEX idx_openai_chats_order ON openai_chats(session_id, "order");
-CREATE INDEX idx_openai_chats_timestamp ON openai_chats(timestamp);
-```
+- Create the `openai_memory_chats` table with proper schema
+- Set up indexes for optimal performance
+- Enable Row Level Security (RLS) with anonymous access policies
+- Grant necessary permissions to the anon role
 
 ### 2. Environment Variables
 
-Create a `.env` file in the `rag-mcp-server` directory with the following variables:
+If not done already, create a `.env` file with the following variables:
 
 ```env
 # Supabase Configuration
@@ -53,20 +46,15 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 # OpenAI Configuration
 OPENAI_API_KEY=your_openai_api_key
 
-# MCP Server Configuration (optional)
-MCP_SERVER_URL=http://localhost:8080/mcp/
+# MCP Server Configuration
+MCP_SERVER_URL=your_mcp_server_url
 ```
 
-### 3. Install Dependencies
+
+### 3. Run the Application
 
 ```bash
-pip install -r requirements.txt
-```
-
-### 4. Run the Application
-
-```bash
-python persistence_ui.py
+python persistence_ui_memory.py
 ```
 
 The application will be available at `http://localhost:5000`.
@@ -76,31 +64,24 @@ The application will be available at `http://localhost:5000`.
 ### Session Management
 
 - `POST /api/sessions` - Create a new chat session
-- `GET /api/sessions` - Get all chat sessions with metadata
+- `GET /api/sessions` - Get all chat sessions with metadata (sorted by last activity)
 - `DELETE /api/sessions/<session_id>` - Delete a session and all its messages
 
 ### Message Management
 
-- `GET /api/sessions/<session_id>/messages` - Get all messages for a session
-- `POST /api/sessions/<session_id>/messages` - Save a new message
+- `GET /api/sessions/<session_id>/messages` - Get all messages for a session (ordered chronologically)
+- `POST /api/sessions/<session_id>/messages` - Save a new message with optional response_id
 
-## Testing
+### Chat Endpoints
 
-Run the test script to verify the persistence functionality:
-
-```bash
-python test_persistence.py
-```
-
-This will test:
-- Session creation
-- Message saving
-- Message loading
-- Session listing
+- `GET /` - Main web interface
+- `POST /ask` - Traditional RAG search
+- `POST /ask_mcp` - MCP-powered search with conversation memory
+- `GET /doc/<path>` - Serve document files
 
 ## Database Schema Details
 
-### openai_chats Table
+### openai_memory_chats Table
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -108,6 +89,7 @@ This will test:
 | `session_id` | TEXT | Unique session identifier (UUID) |
 | `content` | JSONB | Message content with role, text, and metadata |
 | `order` | INTEGER | Message order within the session (1, 2, 3, ...) |
+| `response_id` | TEXT | OpenAI response ID for conversation continuity (optional) |
 | `timestamp` | TIMESTAMP WITH TIME ZONE | When the message was created |
 
 ### Content JSON Structure
@@ -121,12 +103,20 @@ This will test:
 }
 ```
 
+### Database Features
+
+- **Row Level Security (RLS)**: Enabled with anonymous access policies
+- **Indexes**: Optimized for session_id, order, timestamp, and response_id queries
+- **Permissions**: Full CRUD access granted to anonymous users (development mode)
+
 ## Usage
 
 1. **Start a New Chat**: Click "New Chat" to create a fresh session
 2. **Continue Previous Chat**: Click on any session in the sidebar to resume that conversation
 3. **Automatic Persistence**: Your current session is automatically saved and restored when you refresh the page
 4. **Session History**: View all your previous chats in the sidebar, sorted by most recent activity
+5. **Delete Sessions**: Remove entire chat sessions and all associated messages
+6. **Dual Search Modes**: Use traditional RAG search or MCP-powered database queries
 
 ## Troubleshooting
 
@@ -138,11 +128,18 @@ This will test:
 
 2. **Database connection errors**
    - Check your Supabase project URL and API key
-   - Ensure the table exists with the correct schema
+   - Ensure the `openai_memory_chats` table exists with the correct schema
+   - Verify RLS policies are properly configured
 
 3. **Messages not saving**
    - Check browser console for JavaScript errors
    - Verify the API endpoints are responding correctly
+   - Ensure the anon role has proper permissions
+
+4. **Session not persisting**
+   - Check localStorage in browser developer tools
+   - Verify session creation API is working
+   - Ensure Supabase connection is established
 
 ### Debug Mode
 
