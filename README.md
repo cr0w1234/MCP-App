@@ -1,251 +1,124 @@
-# MCP Server and RAG UI Documentation
+# MCP App
 
-This repository contains two main components:
-1. **working-mcp-on-cloudrun**: MCP server implementation and deployment tools
-2. **rag-mcp-server**: Simple web UI for interacting with MCP tools
+A Model Context Protocol (MCP) server implementation designed for deployment, providing database querying capabilities and OpenAI API integration.
 
-> **📖 Quick Start**: See [SETUP.md](SETUP.md) for detailed setup instructions.
+![UI](ui_image.png "UI Demo")
 
 ## 📁 Project Structure
 
 ```
-test-rag-mcp/
-├── working-mcp-on-cloudrun/          # MCP server implementation
-│   ├── readonly-db-mcp-server.py     # Read-only database MCP server
-│   ├── test_mcp_server.py            # MCP server testing utilities
-│   ├── test_openai.py                # OpenAI API integration tests
-│   ├── pyproject.toml                # Python dependencies
-│   ├── uv.lock                       # Dependency lock file
-│   └── Dockerfile                    # Cloud Run deployment
-└── rag-mcp-server/                   # Web UI for MCP interaction
-    ├── ui.py                         # Flask web application
-    ├── rag_system.py                 # RAG (Retrieval-Augmented Generation) system
-    └── documents/                    # Document storage for RAG
+mcp-server/
+├── Dockerfile                   # Container configuration for Cloud Run deployment
+├── newest-mcp-server.py         # Main MCP server application
+├── pyproject.toml               # Python project dependencies and configuration
+└── uv.lock                      # Dependency lock file for reproducible builds
+test-mcp-server/
+├── test_mcp_server.py           # Test local or deployed MCP server on custom queries
+└── test_openai.py               # Test deployed MCP server on OpenAI Responses API
+rag-mcp-app/                 
+├── README_UI.md                 # UI documentation and setup guide
+├── persistence_ui_memory.py     # Main UI with chat memory persistence and connected to PostGres Database + OpenAI API
+├── rag_system.py                # Core RAG system implementation
+└── supabase_setup_memory.sql    # Database schema for storing chat information
 ```
 
-## 🚀 MCP Server (working-mcp-on-cloudrun)
-
-### Overview
-The MCP (Model Context Protocol) server provides tools for database querying and external API integration. It's designed to be deployed on Google Cloud Run for scalable, serverless operation.
-
-### Key Files
-
-#### `readonly-db-mcp-server.py`
-**Purpose**: Main MCP server implementation with read-only database access and TMDB API integration.
-
-**Features**:
-- **Read-only Database Queries**: Secure PostgreSQL access with SELECT-only restrictions
-- **TMDB API Integration**: Intelligent movie/TV show data retrieval
-- **Connection Pooling**: Robust database connection management
-- **Security Validation**: SQL injection protection and query validation
-
-**Available Tools**:
-- `query_demo_db(sql)`: Execute read-only SQL queries
-- `tmdb_intelligent_call(request)`: Smart TMDB API calls
-- `http_get(url, headers)`: Generic HTTP GET requests
-- `add(a, b)`, `subtract(a, b)`: Basic arithmetic operations
-
-
-#### `test_mcp_server.py`
-**Purpose**: Testing utilities for MCP server functionality.
-
-**Usage**:
-```python
-# Test MCP tools connectivity locally
-uv run test_mcp_server.py
-```
-
-#### `test_openai.py`
-**Purpose**: OpenAI API integration testing and validation.
-
-**Features**:
-- Tests OpenAI client configuration
-- Validates API key authentication
-- Tests MCP tool integration with OpenAI
-
-### Deployment
-
-#### Local Development
-```bash
-cd working-mcp-on-cloudrun
-pip install -r requirements.txt
-python readonly-db-mcp-server.py
-```
-
-#### Cloud Run MCP Server Deployment
-Follow this guide: https://cloud.google.com/run/docs/tutorials/deploy-remote-mcp-server#source
-
-#### Environment Variables
-```bash
-DATABASE_URL=postgresql://user:pass@host:port/db
-MCP_SERVER_URL=https://your-mcp-server-url.run.app/mcp/
-TMDB_API_KEY=your_tmdb_api_key
-TMDB_ACCOUNT_ID=your_account_id
-TMDB_SESSION_ID=your_session_id
-OPENAI_API_KEY=your_openai_api_key
-```
-
-## 🌐 RAG UI (rag-mcp-server)
-
-### Overview
-A simple Flask-based web interface that combines traditional RAG (Retrieval-Augmented Generation) with MCP tool integration for enhanced query capabilities.
-
-### Key Files
-
-#### `ui.py`
-**Purpose**: Main Flask web application providing the user interface.
-
-**Features**:
-- **Dual Search Modes**: Traditional RAG and MCP-powered search
-- **Conversation Interface**: Scrollable chat-like interface with conversation history
-- **Document References**: Links to source documents and references
-- **MCP Integration**: Seamless integration with MCP tools
-
-**Endpoints**:
-- `GET /`: Main web interface
-- `POST /ask`: Traditional RAG search
-- `POST /ask_mcp`: MCP-powered database search
-- `GET /doc/<path>`: Document serving
-
-**Conversation Memory**:
-```python
-# Global conversation state management
-current_response_id = None
-
-@app.route('/ask_mcp', methods=['POST'])
-def ask_mcp():
-    global current_response_id
-    # Maintains conversation continuity across requests
-```
-
-#### `rag_system.py`
-**Purpose**: RAG (Retrieval-Augmented Generation) system implementation.
-
-**Features**:
-- **Document Processing**: Handles PDF, DOCX, and other document formats
-- **Vector Embeddings**: Creates and manages document embeddings
-- **Semantic Search**: Retrieves relevant document chunks
-- **Answer Generation**: Generates answers based on retrieved context
-
-**Usage**:
-```python
-from rag_system import RAGService
-
-rag_service = RAGService()
-result = rag_service.answer_question("Your question here")
-```
-
-### UI Features
-
-#### Conversation Interface
-- **Scrollable Chat**: Full conversation history with automatic scrolling
-- **Message Types**: Distinct styling for user questions and assistant responses
-- **Markdown Support**: Rich text formatting for responses
-- **Reference Links**: Clickable links to source documents
-
-#### Search Modes
-1. **Traditional RAG** (`/ask`): Document-based search with vector embeddings
-2. **MCP Search** (`/ask_mcp`): Database querying with conversation memory
-
-## 🔧 Setup and Installation
+## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.10+
 - PostgreSQL database
-- OpenAI API key
-- TMDB API key (optional)
-- Google Cloud account (for deployment)
+- Deployment service account (e.g. Google Cloud, AWS)
+- Environment variables configured
 
-### Local Setup
+### Setup
+1. **Set up environment variables**:
+   Create .env file with:
+   OPENAI_API_KEY (create in OpenAI)
+   DATABASE_URL (e.g. postgresql://user:pass@host:port/db)
+   MCP_SERVER_URL (http://localhost:8080/mcp/ if local. Always add /mcp/ to the end of the URL)
+   SUPABASE_URL (e.g. https://cvzlylxhvthjvmjuluqe.supabase.co)
+   SUPABASE_ANON_KEY (found in Supabase settings)
 
-1.  **Run the Applications**
-```bash
-# Terminal 1: Start MCP server (no need if using an already deployed MCP server url)
-cd working-mcp-on-cloudrun
-python readonly-db-mcp-server.py
 
-# Terminal 2: Start RAG UI
-cd rag-mcp-server
-python ui.py
-```
+2. **Install dependencies**:
+   ```bash
+   cd mcp-server
+   uv sync
+   ```
+   Or manually install the required depencies in the toml file
+
+3. **Run the server locally**:
+   ```bash
+   uv run newest-mcp-server.py
+   ```
+
+### Cloud Run Deployment (if using Google Cloud)
+
+1. **Build and deploy**:
+   Follow https://cloud.google.com/run/docs/tutorials/deploy-remote-mcp-server#container-image
+   
+
+## 🛠️ Available Tools
+
+The MCP server provides the following tools:
+
+- **`pg_query(sql)`**: Execute read-only SQL queries against PostgreSQL database
+- **`pg_explain(sql)`**: Return EXPLAIN (FORMAT JSON) for a query as JSON from PostgreSQL.
 
 ## 🧪 Testing
 
-### MCP Server Testing
+### Test MCP Server Functionality
 ```bash
-cd working-mcp-on-cloudrun
-
-# Test database connectivity
+cd test-mcp-server
 python test_mcp_server.py
-
-# Test OpenAI integration
-python test_openai.py
-
 ```
 
-### RAG UI Testing
+### Test OpenAI Integration
 ```bash
-cd rag-mcp-server
-
-# Start the UI
-python ui.py
-
-# Access at http://localhost:5000
-# Test both search modes:
-# 1. Traditional RAG: Ask questions about documents
-# 2. MCP Search: Query the database with natural language
+cd test-mcp-server
+python test_openai.py
 ```
 
-## 🔒 Security Considerations
+## 🌐 RAG Application
 
-### Database Security
-- **Read-only Access**: Only SELECT queries are allowed
+The `rag-mcp-app/` directory contains a web-based RAG/MCP system with persistent chat functionality:
+
+### Features
+- **Persistent Chat Sessions**: Chat history saved to Supabase database
+- **Document Processing**: Handles PDF, DOCX, and other formats
+- **Vector Search**: Semantic search across document embeddings
+- **MCP Integration**: Combines traditional RAG with MCP tool access
+
+### Setup
+1. **Database Setup**: Run `supabase_setup_memory.sql` in your Supabase instance to create the chat-storing table
+2. **Environment Variables**: Configure Supabase and OpenAI API keys
+3. **Run Application**: `python persistence_ui_memory.py`
+
+See `rag-mcp-app/README_UI.md` for more detailed information.
+
+## 🔒 Security
+
+- **Read-only Database Access**: Only SELECT queries are permitted
 - **SQL Injection Protection**: Comprehensive query validation
-- **Connection Pooling**: Secure connection management
-- **Environment Variables**: Sensitive data stored in environment variables
+- **Connection Pooling**: Secure database connection management
+- **Environment Variables**: Sensitive data stored securely
 
-### API Security
-- **Rate Limiting**: Implement rate limiting for production
-- **Authentication**: Add authentication for production deployments
-- **CORS**: Configure CORS policies appropriately
-
-## 📊 Monitoring and Logging
-
-### Google Cloud Logging
-The MCP server includes comprehensive logging for Google Cloud:
-```python
-logger.info(f"MCP Query Request: {question}")
-logger.info(f"Tool calls executed: {len(resp.tool_calls)}")
-```
-
-### Log Levels
-- **INFO**: Normal operation logs
-- **WARNING**: Connection pool issues
-- **ERROR**: Database connection failures
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
 
 ## 🆘 Troubleshooting
 
 ### Common Issues
 
 1. **Database Connection Errors**
-   - Verify DATABASE_URL format
-   - Check database user permissions
-   - Ensure database is accessible
+   - Verify `DATABASE_URL` format
+   - Check database permissions
+   - Ensure database accessibility
 
-2. **MCP Server Not Starting**
+2. **Server Not Starting**
    - Check environment variables
-   - Verify port availability
+   - Verify port 8080 availability
    - Check dependency installation
 
-3. **RAG UI Not Loading**
-   - Ensure Flask dependencies are installed
-   - Check port 5000 availability
-   - Verify document directory exists
+3. **MCP Tools Not Working**
+   - Verify server URL configuration
+   - Check tool registration
+   - Review server logs
