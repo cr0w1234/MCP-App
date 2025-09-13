@@ -2,7 +2,7 @@
 
 A Model Context Protocol (MCP) server implementation designed for deployment, providing database querying capabilities and OpenAI API integration.
 
-![UI](ui_image.png "UI Demo")
+![UI](ui_img.png "UI Demo")
 
 ## 📁 Project Structure
 
