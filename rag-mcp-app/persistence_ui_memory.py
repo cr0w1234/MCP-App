@@ -36,7 +36,7 @@ HTML_PAGE = """
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>RAG Q&A Demo - Persistent Chat</title>
+    <title>MCP and RAG Q&A Demo - Persistent Chat</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; }
         .container { max-width: 1200px; margin: 0 auto; }
@@ -92,7 +92,7 @@ HTML_PAGE = """
 </head>
 <body>
 <div class="container">
-  <h2>RAG Q&A Demo - Persistent Chat</h2>
+  <h2>MCP and RAG Q&A Demo - Persistent Chat</h2>
   
   <div class="main-content">
     <div class="chat-section">
